@@ -44,14 +44,11 @@ class Car(pygame.sprite.Sprite):
         self.weight = weight
         self.ratio = ratio
         self.curr_time = 0
+        self.curr_img_index = 0
         # change in time, and velocity
         self.dt = 0.33
         self.dv = np.array([70., 0.])
-        # setting up collision 
-        self.tol_screen_right = screen_size[0] 
-        self.tol_object_dist = self.car_size[0]/2
-        self.collision_tpye = 0
-        self.collision_num = 0
+        self.image_list = car_list
 
         # EXTRA
         pygame.sprite.Sprite.__init__(self)
@@ -69,7 +66,7 @@ class Car(pygame.sprite.Sprite):
     # EXTRA
     def update_car_image(self, frames):
         index = frames % 7
-        self.curr_car_img = car_list[index]
+        self.curr_car_img = self.image_list[index]
         self.car = self.curr_car_img
         self.car = pygame.transform.scale(self.car, (self.car_size[0]/self.ratio, self.car_size[1]/self.ratio))
 
@@ -79,49 +76,18 @@ class Car(pygame.sprite.Sprite):
     def get_size(self):
         return self.car_size
     
-    def get_pos(self):
+    def get_state(self):
         return self.state
 
     def set_pos(self, pos):
         self.state[0] = pos - self.car_size[0]//2
         self.state[1] = pos - self.car_size[1]//2
 
+    def set_state(self, new_state):
+        self.state = new_state
+
     def reset_car(self):
         self.state = [-(self.car_size[0]/self.ratio)/2,self.y,0,0]
-
-    def compute_dist(self, input1, input2):
-        return abs(input1[1] - input2[1])
-    
-    # TO DO: fix this is collision
-    def is_coll(self, input1, input2):
-        # if x pos of car exceeds the right side of the screen
-        if (input1[0] >= self.tol_screen_right):
-            self.collision_tpye = 1
-        # TO DO: if dist between car and obj exceeds threshold, collision occured
-        # elif (self.compute_dist(input1,input2) <= self.tol_object_dist):
-        #     self.collision_tpye = 2
-        # no collision
-        else:
-            self.collision_tpye = 0
-        return self.collision_tpye
-
-    def update(self,frames):
-        default = np.zeros(4, dtype='float32')
-        force1 = self.dv * self.dt
-        new_state1 = np.zeros(4, dtype='float32')
-        new_state1[:2] = self.state[:2] +  force1
-        new_state1[2] = self.state[2] + (self.state[0] / self.dt)
-
-        # Check if collision occured first then update simulation
-        if (self.collision_num <= MAX_COLL):
-            if (self.is_coll(new_state1, default) == 0):
-                self.state = new_state1
-                new_time = self.curr_time + self.dt
-                self.curr_time += new_time
-                self.update_car_image(frames)
-            else:
-                self.reset_car()
-                self.collision_num += 1
 
 
 # Object class for Box
@@ -148,7 +114,7 @@ class Object(pygame.sprite.Sprite):
     def get_size(self):
         return self.box_size
     
-    def get_pos(self):
+    def get_state(self):
         return self.state
     
     def gen_rand(self):
@@ -196,7 +162,7 @@ class Simulation:
         # applied to both car and object
         self.screen_size = screen_size
         self.y = state1[1]
-        self.cur_time = 0
+        self.curr_time = 0
         self.dt = 0.33
 
         # car initilization
@@ -206,7 +172,7 @@ class Simulation:
         self.size1 = size1
         self.ratio1 = ratio1
         self.dv1 = np.array([70., 0.])
-        self.car = Car(4000, self.image1, self.size1, 2.5, [0,self.y,0,0], self.screen_size)
+        self.car = Car(4000, self.image1, self.size1, 2.5, self.state1, self.screen_size)
         self.car.reset_car()
 
         # box initilization
@@ -216,12 +182,14 @@ class Simulation:
         self.size2 = size2
         self.ratio2 = ratio2
         self.dv2 = np.array([0., 0.])
-        self.box = Object(200, self.image2, self.size2, 3, [0,self.y,0,0], self.screen_size)
+        self.box = Object(200, self.image2, self.size2, 3, self.state2, self.screen_size)
         self.box.reset_box()
 
         # setting up collision values
-        self.tol_object_dist = self.size1[0]/2 + self.size2[0]/2
-        self.collision_tpye = 0
+        self.tol_screen_right = self.screen_size[0]
+        self.tol_object_dist = (self.size2[0]/self.ratio2)*2
+        self.collision_type = 0
+        self.collision_num = 0
 
     def get_car(self):
         return self.car
@@ -240,10 +208,38 @@ class Simulation:
 
     def resume(self):
         self.paused = False
+
+    def is_coll(self, input1, input2):
+        distance = abs(abs(input1[0]) - abs(input2[0]))
+        # if x pos of car exceeds the right side of the screen
+        if (input1[0] >= self.tol_screen_right):
+            self.collision_type = 1
+        elif (distance <= self.tol_object_dist):
+            self.collision_type = 2
+        # no collision
+        else:
+            self.collision_type = 0
+        return self.collision_type
     
-    def step(self):
-        # TO DO change the values
-        pass
+    def step(self, frame):
+        # self.car.update(frame)
+        default = np.zeros(4, dtype='float32')
+        force1 = self.dv1 * self.dt
+        new_state1 = np.zeros(4, dtype='float32')
+        new_state1[:2] = self.car.get_state()[:2] +  force1
+        new_state1[2] = self.car.get_state()[2] + (self.car.get_state()[0] / self.dt)
+
+        # Check if collision occured first then update simulation
+        new_time = 0
+        if (self.collision_num <= MAX_COLL):
+            if (self.is_coll(new_state1, self.box.get_state()) == 0):
+                self.car.set_state(new_state1) 
+                new_time = self.curr_time + self.dt
+                self.car.update_car_image(frame)
+            else:
+                self.car.reset_car()
+                self.collision_num += 1  
+        self.curr_time += new_time      
 
     def save(self, filename):
         pass
@@ -318,7 +314,7 @@ def main():
             continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             sim.resume()
-            sim.get_car().update(frame)
+            # sim.get_car().update(frame)
             continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_q:
             break
@@ -327,16 +323,15 @@ def main():
 
         # Display items onto the screen
         screen.blit(background, [0, 0])
-        screen.blit(sim.get_car().get_img(), (sim.get_car().get_pos()[0], sim.get_car().get_pos()[1]))
-        screen.blit(sim.get_box().get_img(), (sim.get_box().get_pos()[0], sim.get_box().get_pos()[1])) 
+        screen.blit(sim.get_car().get_img(), (sim.get_car().get_state()[0], sim.get_car().get_state()[1]))
+        screen.blit(sim.get_box().get_img(), (sim.get_box().get_state()[0], sim.get_box().get_state()[1])) 
 
         frame += 1
         # text.draw("Time = %f" % sim.cur_time, screen, (5,5))
 
         # update simulation
         if not sim.paused:
-            sim.step()
-            sim.get_car().update(frame)
+            sim.step(frame)
         else:
             pass
 
