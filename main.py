@@ -43,11 +43,12 @@ class Car(pygame.sprite.Sprite):
         self.y = self.state[1]
         self.weight = weight
         self.ratio = ratio
-        self.curr_time = 0
         self.curr_img_index = 0
         # change in time, and velocity
         self.dt = 0.33
         self.dv = np.array([70., 0.])
+        
+        self.curr_time = 0
         self.image_list = car_list
 
         # EXTRA
@@ -88,6 +89,16 @@ class Car(pygame.sprite.Sprite):
 
     def reset_car(self):
         self.state = [-(self.car_size[0]/self.ratio)/2,self.y,0,0]
+
+    def change_animation_images(self):
+        new_list = []
+        curr_index = self.curr_img_index
+        for i in range(len(self.image_list)):
+            new_list.append(self.image_list[curr_index])
+            curr_index -= 1
+        
+        self.image_list = new_list
+
 
 
 # Object class for Box
@@ -171,7 +182,7 @@ class Simulation:
         self.image1 = image1
         self.size1 = size1
         self.ratio1 = ratio1
-        self.dv1 = np.array([70., 0.])
+        self.dv1 = np.array([20., 0.])
         self.car = Car(4000, self.image1, self.size1, 2.5, self.state1, self.screen_size)
         self.car.reset_car()
 
@@ -187,7 +198,8 @@ class Simulation:
 
         # setting up collision values
         self.tol_screen_right = self.screen_size[0]
-        self.tol_object_dist = (self.size2[0]/self.ratio2)*2
+        self.tol_object_dist = 380
+        # self.tol_object_dist = (self.size2[0]/self.ratio2)*2
         self.collision_type = 0
         self.collision_num = 0
 
@@ -209,8 +221,12 @@ class Simulation:
     def resume(self):
         self.paused = False
 
+    # calc distance between the 2 objects
+    def compute_dist(self, input1, input2):
+        return abs(input1[0] - input2[0])
+
     def is_coll(self, input1, input2):
-        distance = abs(abs(input1[0]) - abs(input2[0]))
+        distance = self.compute_dist(input1, input2)
         # if x pos of car exceeds the right side of the screen
         if (input1[0] >= self.tol_screen_right):
             self.collision_type = 1
@@ -219,7 +235,42 @@ class Simulation:
         # no collision
         else:
             self.collision_type = 0
+
         return self.collision_type
+    
+    # reset variables in collision computation
+    def coll_var_reset(self, timestep, time_tmp, state_tmp, new_state, d, dv):
+        timestep /= 2
+        time_tmp += timestep
+        force = dv * timestep
+        new_state[:2] = state_tmp[:2] +  force
+        new_state[3] = state_tmp[3] / time_tmp
+        d = new_state[1]
+        state_tmp = new_state
+        new_state = np.zeros(4, dtype='float32')
+
+        return timestep, time_tmp, state_tmp, new_state, d
+
+    # apply binary serch method of dividing time in half
+    def coll_response(self, input1, input2, t, dv):
+        time_tmp = t
+        timestep = self.dt
+        state_tmp = input1
+        d1 = state_tmp[0]
+        d2 = self.compute_dist(state_tmp, input2)
+        new_state = np.zeros(4, dtype='float32')
+        final_state = np.zeros(4, dtype='float32')
+
+        # handle disk-disk collision
+        while (d2 > self.tol_object_dist):
+            if (d2 > self.tol_object_dist):
+                timestep, time_tmp, state_tmp, new_state, d2 = self.coll_var_reset(timestep, time_tmp, state_tmp, new_state, d2, dv)
+                d2 = self.compute_dist(state_tmp, input2)
+            else:
+                time_tmp -= timestep
+        final_state = [state_tmp[0], state_tmp[1], state_tmp[2], (-1*state_tmp[3])]  
+
+        return final_state, time_tmp
     
     def step(self, frame):
         # self.car.update(frame)
@@ -229,14 +280,25 @@ class Simulation:
         new_state1[:2] = self.car.get_state()[:2] +  force1
         new_state1[2] = self.car.get_state()[2] + (self.car.get_state()[0] / self.dt)
 
+        new_state2 = self.box.get_state()
+
         # Check if collision occured first then update simulation
         new_time = 0
+        collision_val = self.is_coll(new_state1, self.box.get_state())
+
         if (self.collision_num <= MAX_COLL):
-            if (self.is_coll(new_state1, self.box.get_state()) == 0):
+            if(collision_val == 2):
+                state_after_collision, collision_time = self.coll_response(new_state1, new_state2, self.curr_time, self.dv1) 
+                self.state1 = state_after_collision
+                new_time = collision_time
+                self.dv1 *= -1
+                self.car.change_animation_images()
+                print("backward")
+            elif (collision_val == 0):
                 self.car.set_state(new_state1) 
                 new_time = self.curr_time + self.dt
                 self.car.update_car_image(frame)
-            else:
+            elif (collision_val == 1):
                 self.car.reset_car()
                 self.collision_num += 1  
         self.curr_time += new_time      
