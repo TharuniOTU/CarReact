@@ -12,6 +12,7 @@ class Simulation:
     def __init__(self, title):
         self.title = title
         self.paused = True
+        self.stopped = False
         self.cur_time = 0
 
     def init(self, screen_size, weight1, image1, size1, ratio1, state1, weight2, image2, size2, ratio2, state2):
@@ -27,7 +28,7 @@ class Simulation:
         self.image1 = image1
         self.size1 = size1
         self.ratio1 = ratio1
-        self.dv1 = np.array([20., 0.])
+        self.dv1 = np.array([70., 0.])
         self.car = Car(4000, self.image1, self.size1, 2.5, self.state1, self.screen_size)
         self.car.reset_car()
 
@@ -40,6 +41,10 @@ class Simulation:
         self.dv2 = np.array([0., 0.])
         self.box = Object(200, self.image2, self.size2, 3, self.state2, self.screen_size)
         self.box.hide_box()
+
+        # breaking values
+        self.db = [self.dv1[0]/4, 0] # change in break force
+        self.b = [0, 0]
 
         # setting up collision values
         self.tol_screen_right = self.screen_size[0]
@@ -66,6 +71,12 @@ class Simulation:
 
     def resume(self):
         self.paused = False
+
+    def stop(self):
+        self.stopped = True
+
+    def set_db(self, new_force):
+        self.db = new_force
 
     # calc distance between the 2 objects
     def compute_dist(self, input1, input2):
@@ -122,16 +133,17 @@ class Simulation:
 
         return final_state, time_tmp
     
-    def step(self, frame, screen):
+    # Function that makes the car move
+    def step(self, frame):        
         # update car velocity 
         force1 = self.dv1 * self.dt
         new_state1 = np.zeros(4, dtype='float32')
         new_state1[:2] = self.car.get_state()[:2] +  force1
+        # new_state1[0] = new_state1[0] - 1
         new_state1[2] = self.car.get_state()[2] + (self.car.get_state()[0] / self.dt)
 
         # update box velocity
         rand_time = round(random.uniform(.95, 1.35), 2)	
-        # rand_time = random.random()
         new_state2 = self.box.get_state()
 
         # Check if collision occured first then update simulation
@@ -140,9 +152,24 @@ class Simulation:
 
         # IF no collision
         if (collision_val == 0):
+            # check if break is applied, and if the car has come to a stop
+            if (self.stopped):
+                self.b[0] = force1[0] * 0.75
+                # self.b[0] = self.b[0] + self.db[0]
+                if (self.b[0] > self.dv1[0]):
+                    self.stopped = False
+                    self.car.reset_car()
+                    self.paused = True
+                else:
+                    # break_force = force1[0] * 0.75
+                    # self.b[0] = self.b[0] + force1[0]
+                    print(self.b)
+                    new_state1[0] = new_state1[0] - self.b[0]
+                    
             self.car.set_state(new_state1) 
-            new_time = self.curr_time + self.dt
             self.car.update_car_image(frame)
+            new_time = self.curr_time + self.dt
+
         # IF collision with wall on the right side
         elif (collision_val == 1):
             self.car.reset_car()
@@ -165,7 +192,7 @@ class Simulation:
 
         self.curr_time += new_time  
         if ((self.curr_time <= rand_time+.5) and (self.curr_time >= rand_time-.5)):
-            self.box.reset_box()    
+            self.box.reset_box() 
 
     def save(self, filename):
         pass
