@@ -63,8 +63,9 @@ def main():
     # display to screen
     print ('--------------------------------')
     print ('Usage:')
-    print ('Press (r) to start/resume simulation')
+    print ('Press (r) to start the car')
     print ('Press (p) to pause simulation')
+    print ('Press (b) to apply breaks')
     print ('Press (q) to quit')
     print ('--------------------------------')
 
@@ -90,7 +91,9 @@ def main():
             continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             sim.resume()
-            	
+            continue
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_b:
+            sim.stop()
             continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_q:
             break
@@ -106,7 +109,7 @@ def main():
 
         # update simulation
         if not sim.paused:
-            sim.step(frame, screen)
+            sim.step(frame)
         else:
             pass
 
