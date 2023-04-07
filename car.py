@@ -13,7 +13,7 @@ car_list = [car1, car2, car3, car4, car5, car6, car7]
 
 # Car class
 class Car(pygame.sprite.Sprite):
-    def __init__(self, weight, image, car_size, ratio, state, screen_size):
+    def __init__(self, weight, image, car_size, ratio, state, screen_size, dv):
         self.car_size = car_size
         self.screen_size = screen_size
         self.state = state
@@ -23,7 +23,7 @@ class Car(pygame.sprite.Sprite):
         self.curr_img_index = 0
         # change in time, and velocity
         self.dt = 0.33
-        self.dv = np.array([70., 0.])
+        self.dv = dv
         
         self.curr_time = 0
         self.image_list = car_list
@@ -56,6 +56,9 @@ class Car(pygame.sprite.Sprite):
     
     def get_state(self):
         return self.state
+    
+    def get_dv(self):
+        return self.dv
 
     def set_pos(self, pos):
         self.state[0] = pos - self.car_size[0]//2
@@ -63,6 +66,9 @@ class Car(pygame.sprite.Sprite):
 
     def set_state(self, new_state):
         self.state = new_state
+    
+    def set_dv(self, new_dv):
+        self.dv = new_dv
 
     def reset_car(self):
         self.state = [-(self.car_size[0]/self.ratio)/2,self.y,0,0]

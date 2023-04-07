@@ -93,7 +93,8 @@ def main():
             sim.resume()
             continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_b:
-            sim.stop()
+            # /sim.stop()
+            sim.slowDown
             continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_q:
             break

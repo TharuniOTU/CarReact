@@ -5,13 +5,14 @@ import random
 # Object class for Box
 class Object(pygame.sprite.Sprite):
     
-    def __init__(self, weight, image, box_size, ratio, state, screen_size):
+    def __init__(self, weight, image, box_size, ratio, state, screen_size, dv):
         self.box_size = box_size
         self.state = state
         self.y = self.state[1]
         self.weight = weight
         self.ratio = ratio
         self.screen_size = screen_size
+        self.dv = dv
 
         pygame.sprite.Sprite.__init__(self)
         self.obj = pygame.image.load(image)
@@ -28,6 +29,15 @@ class Object(pygame.sprite.Sprite):
     
     def get_state(self):
         return self.state
+    
+    def set_state(self, new_state):
+        self.state = new_state
+    
+    def get_dv(self):
+        return self.dv
+    
+    def set_dv(self, new_dv):
+        self.dv = new_dv
     
     def gen_rand(self):
         # set up boundaries
@@ -58,6 +68,9 @@ class Object(pygame.sprite.Sprite):
     def hide_box(self):
         distance = self.screen_size[0] + self.box_size[0]
         self.state = [distance,self.y,0,0]
+
+    def set_dv(self, new_dv):
+        self.dv = new_dv
 
     def set_pos(self, pos):
         self.state[0] = pos - self.box_size[0]//2
