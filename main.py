@@ -60,6 +60,11 @@ def main():
     screen.blit(background, [0, 0])
     pygame.display.set_caption(title)
 
+    # intitialize collision detection to automatic or manual
+    # NOTE to change to automatic, change the commented lines
+    auto_or_man = "M"
+    # auto_or_man = "A"
+
     # car object
     car_image = "images/car-sprites/car1.png"
     car_size = [1004, 450]
@@ -69,14 +74,13 @@ def main():
     box_size = [500, 470]
     # setting up simulation
     sim = Simulation(title)
-    sim.init([win_width, win_height], 4000, car_image, car_size, 2.5, [0,fixed_y,0,0], 200, box_image, box_size, 3, [0,fixed_y,0,0])
+    sim.init([win_width, win_height], 4000, car_image, car_size, 2.5, [0,fixed_y,0,0], 200, box_image, box_size, 3, [0,fixed_y,0,0], auto_or_man)
 
 
     # display to screen
     print ('--------------------------------')
     print ('Usage:')
     print ('Press (r) to start the car')
-    print ('Press (p) to pause simulation')
     print ('Press (b) to apply breaks')
     print ('Press (q) to quit')
     print ('--------------------------------')
@@ -89,24 +93,16 @@ def main():
         # 30 fps
         clock.tick(30)
 
-        # update sprite x, y position using values
-        # returned from the simulation
-        # background.set_pos(to_screen(0, 0, win_width, win_height))
-        
+        # update sprite x, y position using values returned from the simulation
         event = pygame.event.poll()
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit(0)
 
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-            sim.pause()
-            #continue
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             sim.resume()
-            #continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_b:
             sim.slowDown()
-            #continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_q:
             break
         else:

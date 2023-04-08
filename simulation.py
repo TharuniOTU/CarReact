@@ -13,9 +13,6 @@ from car import *
 from object import *
 import time
 
-# Global Variables
-auto_or_man = "A"
-
 # Class that runs the Stimulation #
 class Simulation:
     def __init__(self, title):
@@ -28,12 +25,13 @@ class Simulation:
         self.hasCollided = False
         self.isResetted = False
 
-    def init(self, screen_size, weight1, image1, size1, ratio1, state1, weight2, image2, size2, ratio2, state2):
+    def init(self, screen_size, weight1, image1, size1, ratio1, state1, weight2, image2, size2, ratio2, state2, auto_or_man):
         # applied to both car and object
         self.screen_size = screen_size
         self.y = state1[1]
         self.curr_time = 0
         self.dt = 0.33
+        self.auto_or_man = auto_or_man
 
         # car initilization
         self.state1 = state1 #self.state1[2]
@@ -108,10 +106,11 @@ class Simulation:
 
     # reset car/object position/velocity and simulation variables
     def reset_sim(self):
-        time.sleep(1)
+        time.sleep(0.5)
 
         if(self.hasCollided):
             self.dv1 = -1 * self.dv1
+        
         self.paused = True
         self.isResetted = False
         self.collRespond = False
@@ -124,7 +123,8 @@ class Simulation:
         #reset car and box
         self.car.change_animation_images()
         self.car.reset_car()
-        self.box.hide_box()        
+        self.box.hide_box() 
+               
         
     # Calculate the amount of brake force that needs to be applied
     def calculateBrakeForce(self,force1):
@@ -137,6 +137,7 @@ class Simulation:
             else:
                 #Car is at rest now
                 self.reset_sim() 
+                
         # calculate force to apply after a collsion
         elif(self.hasCollided):
             brakeForce = -1 * force1 * self.BrakeRatio
@@ -211,7 +212,16 @@ class Simulation:
 
         return final_state1, final_state2, time_tmp
     
-    # Function that makes the car move
+    # Apply auto-breaking if in auto mode
+    def auto_brake(self):
+        self.tol_auto_brake_dist = (self.car.get_size()[0]/self.ratio1)/2 + (self.box.get_size()[0]/self.ratio2)/2
+        self.tol_auto_brake_dist = self.tol_auto_brake_dist + self.car.get_size()[0]/self.ratio1
+        distance = self.compute_dist(self.car.get_state(), self.box.get_state())
+        # # if x pos of car exceeds the right side of the screen
+        if (distance <= self.tol_auto_brake_dist):
+            self.slowDown()
+    
+    # Main function that makes the car move
     def step(self, frame):        
         # update car velocity 
         # force = [force in x direction, force in y direction]
@@ -231,6 +241,10 @@ class Simulation:
         force2 = self.dv2 * self.dt
         new_state2[:2] = self.box.get_state()[:2] +  force2
         new_state2[2] = self.box.get_state()[2] + (self.box.get_state()[0] / self.dt)
+
+        # check if auto detection is applied
+        if (self.auto_or_man == "A"):
+            self.auto_brake()
 
         # if break is applied, change car to rolling speed
         brakeForce = self.calculateBrakeForce(force1)
