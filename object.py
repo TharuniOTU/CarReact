@@ -1,3 +1,11 @@
+"""
+Object Class
+Defines box attributes like its size, state, weight, etc
+Loads the image of the box onto the screen and updates it
+Simulation class uses this to update the box's position and velocity 
+"""
+
+
 import pygame, sys 
 import numpy as np
 import random
