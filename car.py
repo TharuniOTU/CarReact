@@ -1,3 +1,10 @@
+"""
+Car Class
+Defines car attributes like its size, state, weight, etc
+Loads the image of the car onto the screen and updates it
+Simulation class uses this to update the box's position and velocity 
+"""
+
 # import necessary libraries
 import pygame, sys 
 import numpy as np

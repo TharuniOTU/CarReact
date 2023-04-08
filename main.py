@@ -1,6 +1,18 @@
+"""
+Project: Car Collision Detection & Response
+Name: Tharuni Iranjan, 100694352
+Course: CSCI3010 Simulation & Modelling 
+Professor: Dr Faisal Quershi
+Date: April 10, 2022
+"""
+
+"""
+Main Function
+Handles user interaction and calls on necessary classes to run the simulation
+"""
+
 # import necessary libraries
 import pygame, sys
-import matplotlib.pyplot as plt
 import numpy as np
 import random
 from functions import * 
@@ -88,14 +100,13 @@ def main():
 
         if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
             sim.pause()
-            continue
+            #continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             sim.resume()
-            continue
+            #continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_b:
-            # /sim.stop()
-            sim.slowDown
-            continue
+            sim.slowDown()
+            #continue
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_q:
             break
         else:
