@@ -4,7 +4,7 @@
 Tharuni Iranjan
 
 ### Problem
-How can we simulate car collision detection and response?
+How can we simulate car collision detection and response? <br>
 How does autonmous vehicles compare with manual?
 
 ### Approach
@@ -15,5 +15,5 @@ Chi-Square test in pygame is used to compare the actual data for random position
 to measure accuracy.
 
 ### Running the Code
-Make sure you have python3, pygame and pytest installed
+Make sure you have python3, pygame and pytest installed <br>
 On terminal run python3 main.py
