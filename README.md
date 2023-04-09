@@ -1,8 +1,5 @@
 # CarReact
 
-### Contributors 
-Tharuni Iranjan
-
 ### Problem
 How can we simulate car collision detection and response? <br>
 How does autonmous vehicles compare with manual?
@@ -17,3 +14,6 @@ to measure accuracy.
 ### Running the Code
 Make sure you have python3, pygame and pytest installed <br>
 On terminal run python3 main.py
+
+### Contributors 
+Tharuni Iranjan
