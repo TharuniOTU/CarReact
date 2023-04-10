@@ -57,7 +57,7 @@ class Object(pygame.sprite.Sprite):
         mid = self.screen_size[0]/2 + self.box_size[0]/2
         mid_left = mid-2
         mid_right = mid+2
-
+        # temp_list = [min, min_left, min_right, max, max_left, mid, mid_right, mid_left]
         # each number and its weights
         prob = {min_left:.5/8., min:1.5/8., min_right:1.25/8., mid_left:1.5/8., mid:1.5/8.,
         mid_right:1./8., max_left:.5/8., max:.25/8.}
