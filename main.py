@@ -104,6 +104,7 @@ def main():
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_b:
             sim.slowDown()
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+            sim.save()
             break
         else:
             pass

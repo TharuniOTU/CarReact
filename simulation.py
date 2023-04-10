@@ -8,10 +8,12 @@ handles the interactions between the objects
 # import necessary libraries
 import pygame, sys 
 import numpy as np
+import matplotlib.pyplot as plt
 import random
+import time
 from car import *
 from object import *
-import time
+from functions import *
 
 # Class that runs the Stimulation #
 class Simulation:
@@ -57,8 +59,6 @@ class Simulation:
         self.box.hide_box()
 
         # breaking values
-        self.db = [self.dv1[0]/4, 0] # change in break force
-        self.b = [0, 0]
         self.BrakeRatioResetVal = 0.85
         self.BrakeRatio = self.BrakeRatioResetVal
         self.maxBreakIntervals = 10
@@ -68,10 +68,20 @@ class Simulation:
         self.tol_screen_right = self.screen_size[0]
         self.tol_screen_left = 0 - self.size1[0]/self.ratio1
         self.tol_object_dist = 380
-        #self.tol_object_dist = 380
         # self.tol_object_dist = (self.size2[0]/self.ratio2)*2
         self.collision_type = 0
-        self.collision_num = 0
+
+        # store data for pytest
+        self.car_pos_before_brake = 0
+        self.rand_pos_list_file = "Data/RandPos_Actual.txt"
+        self.react_dist_list_file = "Data/ReactDistance_Actual.txt"
+
+        self.rand_pos_list = [] # first list
+        self.react_dist_list = [] # second list
+
+        self.total_runs = 0
+        self.not_collided_count = 0
+        self.collided_count = 0
 
     # Accessors
     def get_car(self):
@@ -86,22 +96,20 @@ class Simulation:
     
     def set_dv_obj(self, dv):
         self.dv2 = dv
-    
-    def set_db(self, new_force):
-        self.db = new_force
 
+    # Reset values for simulation variables
     def pause(self):
         self.paused = True
 
-    # Reset values for simulation variables
     def resume(self):
         self.paused = False
-        self.BrakeRatio = self.BrakeRatioResetVal
-        #self.CollRatio = self.CollRatioResetVal
-        self.applyBrakes = False
         self.collRespond = False
+        self.applyBrakes = False
+        self.BrakeRatio = self.BrakeRatioResetVal
 
     def slowDown(self):
+        if(not self.hasCollided):
+            self.car_pos_before_brake = self.car.get_state()[0] 
         self.applyBrakes = True
 
     # reset car/object position/velocity and simulation variables
@@ -136,6 +144,10 @@ class Simulation:
                 self.BrakeRatio+=self.BrakeForceIncr
             else:
                 #Car is at rest now
+                dist_diff = abs(self.car_pos_before_brake - self.car.get_state()[0])
+                self.react_dist_list.append(dist_diff)
+                self.total_runs += 1
+                self.not_collided_count += 1
                 self.reset_sim() 
                 
         # calculate force to apply after a collsion
@@ -146,6 +158,7 @@ class Simulation:
                 self.BrakeRatio+=self.BrakeForceIncr
             else:
                 #Car is at rest now
+                self.total_runs += 1
                 self.reset_sim() 
         else:
             brakeForce = 0
@@ -222,7 +235,7 @@ class Simulation:
             self.slowDown()
     
     # Main function that makes the car move
-    def step(self, frame):        
+    def step(self, frame):  
         # update car velocity 
         # force = [force in x direction, force in y direction]
         force1 = self.dv1 * self.dt
@@ -253,6 +266,8 @@ class Simulation:
         if(self.paused == False):
             if(self.collRespond):
                 new_state1[:2] = new_state1[:2] + brakeForce
+                # TO DO: apped to both lists, need calculate time
+                self.react_time_list = []
             elif (self.applyBrakes):
                 new_state1[:2] = new_state1[:2] - brakeForce
        
@@ -266,11 +281,13 @@ class Simulation:
 
         # IF collision with wall on the right side
         elif (collision_val == 1 ):
+            self.total_runs += 1
             self.reset_sim()
 
         # IF collision with wall on the left side
         elif (collision_val == 2):
             self.dv1 = -self.dv1
+            self.total_runs += 1
             self.reset_sim()
 
         # If collision with object
@@ -290,6 +307,7 @@ class Simulation:
         # if current time is equal to random time generated, make the box appear  
         if ((self.curr_time <= rand_time+.5) and (self.curr_time >= rand_time-.5)):
             self.box.reset_box() 
+            self.rand_pos_list.append(self.box.get_state()[0])
 
         #update car image
         if(not self.paused):
@@ -299,8 +317,35 @@ class Simulation:
             if(self.hasCollided):
                 self.box.set_state(new_state2)
 
-    def save(self, filename):
-        pass
+    def save(self):
+        print("rand_pos_list: ",self.rand_pos_list) # first list
+        print("react_dist_list: ",self.react_dist_list)# second list
 
-    def load(self, filename):
-        pass
+        #UPDATE FILE AND SAVE ALL VARIABLES
+        write_file(self.react_dist_list_file,self.react_dist_list)
+        write_file(self.rand_pos_list_file,self.rand_pos_list)
+
+        #plot the graph
+        self.load()
+
+    def load(self):
+        
+        self.collided_count = self.total_runs - self.not_collided_count
+        # TO DO: plot the data
+        # plt.title("Histogram for Sample Size: " + str(self.total_runs))
+        # plt.hist(self.collided_count, self.not_collided_count, 2)
+        # plt.show()
+        # Data for the bar graph
+        x = ['Collided','Not Collided']
+        y = [self.collided_count,self.not_collided_count]
+
+        # Create a bar graph
+        plt.bar(x, y)
+
+        # Set labels and title
+        plt.xlabel('Has Collided')
+        plt.ylabel('Number of Runs')
+        plt.title('Bar Graph Example')
+
+        # Display the graph
+        plt.show()
