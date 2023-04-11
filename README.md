@@ -15,7 +15,11 @@ to measure accuracy.
 ### Running the Code
 Make sure you have python3 installed along with the necessary libraries (ex. pygame, pytest, etc.) <br>
 On terminal run python3 main.py <br>
-To run pytest run the command python3 -m pytest -s --cov
+To run pytest run the command python3 -m pytest -s --cov <br>
+
+
+https://user-images.githubusercontent.com/90390504/231201068-5c32027e-eb95-432f-8b1f-19f2d1a37170.mp4
+
 
 ### Contributors 
 Tharuni Iranjan
