@@ -62,8 +62,8 @@ def main():
 
     # intitialize collision detection to automatic or manual
     # NOTE to change to automatic, change the commented lines
-    # auto_or_man = "M"
-    auto_or_man = "A"
+    auto_or_man = "M"
+    # auto_or_man = "A"
 
     # car object
     car_image = "images/car-sprites/car1.png"
