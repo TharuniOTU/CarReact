@@ -62,3 +62,6 @@ class MyText():
     def draw(self, str1, screen, pos):
         text = self.font.render(str1, self.antialias, self.color, self.background)
         screen.blit(text, pos)
+
+expcted_result1 = True
+expcted_result2 = True
