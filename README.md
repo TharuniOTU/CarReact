@@ -19,7 +19,7 @@ To run pytest run the command python3 -m pytest -s --cov
 
 
 ### Contributors 
-Tharuni Iranjan <br>
+Tharuni Iranjan - [TharuniI](https://github.com/TharuniI) <br>
 
 
 https://user-images.githubusercontent.com/90390504/231201068-5c32027e-eb95-432f-8b1f-19f2d1a37170.mp4
